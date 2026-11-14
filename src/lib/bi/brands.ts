@@ -105,5 +105,9 @@ export function contrastText(hex: string): "dark" | "light" {
 export function isBrand(v: unknown): v is Brand {
   if (!v || typeof v !== "object") return false;
   const b = v as Record<string, unknown>;
-  return typeof b.id === "string" && typeof b.name === "string" && typeof b.revenueGoal === "number" && typeof b.marketingBudget === "number" && Array.isArray(b.integrations) && typeof b.color === "string";
+  return typeof b["id"] === "string" && typeof b["name"] === "string" && typeof b["revenueGoal"] === "number" && typeof b["marketingBudget"] === "number" && Array.isArray(b["integrations"]) && typeof b["color"] === "string";
+}
+
+export function getBrand(id: string, list: Brand[] = DEFAULT_BRANDS): Brand | undefined {
+  return list.find((b) => b.id === id);
 }

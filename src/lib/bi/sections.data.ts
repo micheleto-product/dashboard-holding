@@ -1,4 +1,4 @@
-import type { Brand } from "./brands";
+import { brandGoalBias, brandScale, type Brand } from "./brands";
 import { periodBuckets, periodFactor, periodSeed, type PeriodState } from "./period";
 import { seeded, type Rng } from "./rng";
 import type { ValueFormat } from "./format";
@@ -17,7 +17,7 @@ type Ctx = {
 function makeCtx(brand: Brand, sectionId: string, period: PeriodState): Ctx {
   return {
     rng: seeded(`${brand.id}:${sectionId}:${periodSeed(period)}`),
-    vol: brand.scale * periodFactor(period),
+    vol: brandScale(brand) * periodFactor(period),
     buckets: periodBuckets(period),
     brand,
     period,
@@ -39,7 +39,7 @@ function levelSeries(ctx: Ctx, level: number, trend = 0.08, noise = 0.06): numbe
 }
 
 function kpi(ctx: Ctx, label: string, value: number, format: ValueFormat, opts: { invert?: boolean | undefined; spark?: number[] | undefined; bias?: number | undefined } = {}): Kpi {
-  const bias = opts.bias ?? (ctx.brand.goalBias - 90) / 4;
+  const bias = opts.bias ?? (brandGoalBias(ctx.brand) - 90) / 4;
   const change = ctx.rng.range(-9, 16) + bias * (opts.invert ? -1 : 1);
   return {
     label,
@@ -71,7 +71,7 @@ function revops(ctx: Ctx): SectionData {
   const mql = summary.qualifiedLeads;
   const sql = r0(mql * rng.range(0.42, 0.52));
   const prop = r0(sql * rng.range(0.45, 0.55));
-  const won = Math.max(1, r0(prop * rng.range(0.3, 0.4) * (ctx.brand.goalBias / 100)));
+  const won = Math.max(1, r0(prop * rng.range(0.3, 0.4) * (brandGoalBias(ctx.brand) / 100)));
   const revenue = summary.revenue;
   const ticket = revenue / won;
   const goal = revenue / (summary.goalPct / 100);
@@ -130,7 +130,7 @@ function revops(ctx: Ctx): SectionData {
         .map((name) => {
           const n = Math.max(1, r0((won / reps.length) * rng.range(0.5, 1.5)));
           const t = ticket * rng.vary(1, 0.2);
-          return { vendedor: name, negocios: n, receita: n * t, conversao: r1(conv * rng.vary(1, 0.3)), ticket: t, meta: r1(ctx.brand.goalBias * rng.vary(1, 0.2)) };
+          return { vendedor: name, negocios: n, receita: n * t, conversao: r1(conv * rng.vary(1, 0.3)), ticket: t, meta: r1(brandGoalBias(ctx.brand) * rng.vary(1, 0.2)) };
         })
         .sort((a, b) => b.receita - a.receita),
     },
@@ -211,7 +211,7 @@ function siteSeo(ctx: Ctx): SectionData {
 function metaAds(ctx: Ctx): SectionData {
   const { rng, vol } = ctx;
   const spend = rng.vary(92000, 0.08) * vol;
-  const roas = rng.range(2.6, 4.4) * (ctx.brand.goalBias / 95);
+  const roas = rng.range(2.6, 4.4) * (brandGoalBias(ctx.brand) / 95);
   const cpa = rng.range(38, 72);
   const ctr = rng.range(0.9, 1.9);
   const cpm = rng.range(14, 26);
@@ -272,7 +272,7 @@ function metaAds(ctx: Ctx): SectionData {
 
 function instagram(ctx: Ctx): SectionData {
   const { rng, vol, brand } = ctx;
-  const followers = rng.vary(248000, 0.05) * brand.scale;
+  const followers = rng.vary(248000, 0.05) * brandScale(brand);
   const newFollowers = rng.vary(6400, 0.15) * vol;
   const reach = rng.vary(1_150_000, 0.1) * vol;
   const eng = rng.range(2.4, 4.8);
@@ -332,7 +332,7 @@ function instagram(ctx: Ctx): SectionData {
 
 function facebook(ctx: Ctx): SectionData {
   const { rng, vol, brand } = ctx;
-  const followers = rng.vary(132000, 0.05) * brand.scale;
+  const followers = rng.vary(132000, 0.05) * brandScale(brand);
   const organic = rng.vary(310000, 0.1) * vol;
   const paid = organic * rng.range(1.4, 2.2);
   const engagements = organic * rng.range(0.035, 0.06);
@@ -395,7 +395,7 @@ function eventos(ctx: Ctx): SectionData {
   const names = ["Summit Anual", "Webinar: Tendências 2027", "Workshop Prático", "Feira do Setor", "Meetup Clientes", "Café com Parceiros", "Masterclass Executiva", "Roadshow Regional"];
   const types = ["Webinar", "Feira", "Workshop", "Meetup"];
   const list = names.slice(0, Math.min(names.length, Math.max(4, count))).map((name, i) => {
-    const insc = r0(rng.range(120, 900) * ctx.brand.scale + 40);
+    const insc = r0(rng.range(120, 900) * brandScale(ctx.brand) + 40);
     const pres = r0(insc * rng.range(0.45, 0.78));
     const leads = r0(pres * rng.range(0.18, 0.4));
     return { evento: name, data: `${String(2 + i * 3).padStart(2, "0")}/11`, tipo: types[i % types.length] ?? "Webinar", inscritos: insc, presentes: pres, leads, pipeline: leads * rng.range(2200, 5200) };
@@ -450,7 +450,7 @@ function pr(ctx: Ctx): SectionData {
   const { rng, vol } = ctx;
   const mentions = r0(rng.vary(140, 0.15) * vol + 3);
   const reach = mentions * rng.range(60000, 110000);
-  const sov = rng.range(18, 34) * (ctx.brand.goalBias / 95);
+  const sov = rng.range(18, 34) * (brandGoalBias(ctx.brand) / 95);
   const positive = rng.range(58, 78);
   const ave = reach * rng.range(0.012, 0.025);
   const total = trendSeries(ctx, mentions, 0.2, 0.35);
@@ -517,11 +517,11 @@ function pr(ctx: Ctx): SectionData {
 
 function endomarketing(ctx: Ctx): SectionData {
   const { rng, brand } = ctx;
-  const enps = rng.range(28, 52) * (brand.goalBias / 95);
+  const enps = rng.range(28, 52) * (brandGoalBias(brand) / 95);
   const open = rng.range(62, 84);
   const participation = rng.range(45, 72);
-  const employees = r0(rng.vary(820, 0.05) * brand.scale + 60);
-  const turnover = rng.range(1.1, 2.6) * (95 / brand.goalBias);
+  const employees = r0(rng.vary(820, 0.05) * brandScale(brand) + 60);
+  const turnover = rng.range(1.1, 2.6) * (95 / brandGoalBias(brand));
   const areas = ["Comercial", "Marketing", "Tecnologia", "Operações", "Financeiro", "RH"];
   const campaigns = [
     { c: "Programa de Reconhecimento Q4", canal: "Intranet" },
@@ -577,7 +577,7 @@ function endomarketing(ctx: Ctx): SectionData {
 
 function parcerias(ctx: Ctx): SectionData {
   const { rng, vol, brand } = ctx;
-  const partners = r0(rng.vary(64, 0.1) * brand.scale + 6);
+  const partners = r0(rng.vary(64, 0.1) * brandScale(brand) + 6);
   const leads = r0(rng.vary(780, 0.12) * vol);
   const conv = rng.range(8, 16);
   const revenue = leads * (conv / 100) * rng.range(5200, 8200);
