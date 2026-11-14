@@ -1,4 +1,4 @@
-import { BRANDS, brandGoalBias, brandScale, type Brand } from "./brands";
+import { BRANDS, type Brand } from "./brands";
 import { periodBuckets, periodFactor, periodSeed, type PeriodState } from "./period";
 import { seeded } from "./rng";
 import type { Tone } from "./types";
@@ -29,20 +29,20 @@ export type BrandSummary = {
 
 export function getBrandSummary(brand: Brand, period: PeriodState): BrandSummary {
   const rng = seeded(`summary:${brand.id}:${periodSeed(period)}`);
-  const vol = brandScale(brand) * periodFactor(period);
-  const revenue = rng.vary(2_350_000, 0.05) * vol * (brandGoalBias(brand) / 100);
+  const vol = brand.scale * periodFactor(period);
+  const revenue = rng.vary(2_350_000, 0.05) * vol * (brand.goalBias / 100);
   const investment = rng.vary(310_000, 0.06) * vol;
   const leads = Math.round(rng.vary(5200, 0.08) * vol);
   const qualifiedLeads = Math.round(leads * rng.range(0.36, 0.46));
-  const customers = Math.max(1, Math.round(qualifiedLeads * rng.range(0.14, 0.2) * (brandGoalBias(brand) / 100)));
-  const goalPct = Math.round(brandGoalBias(brand) * rng.vary(1, 0.025) * 10) / 10;
+  const customers = Math.max(1, Math.round(qualifiedLeads * rng.range(0.14, 0.2) * (brand.goalBias / 100)));
+  const goalPct = Math.round(brand.goalBias * rng.vary(1, 0.025) * 10) / 10;
   const n = periodBuckets(period).length;
   const shape = (total: number, trend: number) => {
     const raw = Array.from({ length: n }, (_, i) => (1 + trend * (i / Math.max(1, n - 1) - 0.5)) * rng.vary(1, 0.14));
     const s = raw.reduce((a, b) => a + b, 0);
     return raw.map((r) => (r / s) * total);
   };
-  const bias = (brandGoalBias(brand) - 90) / 3;
+  const bias = (brand.goalBias - 90) / 3;
   return {
     brand,
     revenue,
