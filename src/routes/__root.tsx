@@ -12,6 +12,12 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
+import { AppSidebar } from "@/components/bi/app-sidebar";
+import { AppHeader } from "@/components/bi/app-header";
+import { AppStateProvider, THEME_SCRIPT } from "@/components/bi/app-state";
 
 function NotFoundComponent() {
   return (
@@ -75,22 +81,24 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    // Replace these placeholders with the app's name and description when first building the app.
-    // Each content route, / included, must still set its own head(). Never add og:image or
-    // twitter:image here: every page without its own would inherit the root's preview image.
+    // Each content route sets its own head(). Never add og:image or twitter:image here.
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Holding · Growth Intelligence" },
+      { name: "description", content: "Painel executivo de BI e Growth Analytics da holding." },
+      { property: "og:title", content: "Holding · Growth Intelligence" },
+      { property: "og:description", content: "Painel executivo de BI e Growth Analytics da holding." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -106,8 +114,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
@@ -123,8 +132,23 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AppStateProvider>
+        <TooltipProvider delayDuration={200}>
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full">
+              <AppSidebar />
+              <SidebarInset className="min-w-0">
+                <AppHeader />
+                <main className="bg-glow flex-1">
+                  {/* Required: nested routes render here. */}
+                  <Outlet />
+                </main>
+              </SidebarInset>
+            </div>
+          </SidebarProvider>
+        </TooltipProvider>
+        <Toaster position="bottom-right" />
+      </AppStateProvider>
     </QueryClientProvider>
   );
 }

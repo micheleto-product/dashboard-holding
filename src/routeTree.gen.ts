@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AssistenteRouteImport } from './routes/assistente'
+import { Route as MarcaBrandIdSectionRouteImport } from './routes/marca.$brandId.$section'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssistenteRoute = AssistenteRouteImport.update({
+  id: '/assistente',
+  path: '/assistente',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarcaBrandIdSectionRoute = MarcaBrandIdSectionRouteImport.update({
+  id: '/marca/$brandId/$section',
+  path: '/marca/$brandId/$section',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
+  '/marca/$brandId/$section': typeof MarcaBrandIdSectionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
+  '/marca/$brandId/$section': typeof MarcaBrandIdSectionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
+  '/marca/$brandId/$section': typeof MarcaBrandIdSectionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/assistente' | '/marca/$brandId/$section'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/assistente' | '/marca/$brandId/$section'
+  id: '__root__' | '/' | '/assistente' | '/marca/$brandId/$section'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AssistenteRoute: typeof AssistenteRoute
+  MarcaBrandIdSectionRoute: typeof MarcaBrandIdSectionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assistente': {
+      id: '/assistente'
+      path: '/assistente'
+      fullPath: '/assistente'
+      preLoaderRoute: typeof AssistenteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marca/$brandId/$section': {
+      id: '/marca/$brandId/$section'
+      path: '/marca/$brandId/$section'
+      fullPath: '/marca/$brandId/$section'
+      preLoaderRoute: typeof MarcaBrandIdSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AssistenteRoute: AssistenteRoute,
+  MarcaBrandIdSectionRoute: MarcaBrandIdSectionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
