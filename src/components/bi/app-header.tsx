@@ -16,7 +16,7 @@ function useCrumbs(): { label: string; to?: "/" }[] {
   if (pathname === "/assistente") return [{ label: "Holding", to: "/" }, { label: "Assistente IA Executivo" }];
   const m = pathname.match(/^\/marca\/([^/]+)\/([^/]+)/);
   if (m) {
-    return [{ label: "Holding", to: "/" }, { label: getBrand(m[1])?.name ?? "Marca" }, { label: getSection(m[2])?.title ?? "" }];
+    return [{ label: "Holding", to: "/" }, { label: getBrand(m[1]!)?.name ?? "Marca" }, { label: getSection(m[2]!)?.title ?? "" }];
   }
   return [{ label: "Holding", to: "/" }];
 }

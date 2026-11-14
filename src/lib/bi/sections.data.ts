@@ -3,6 +3,7 @@ import { periodBuckets, periodFactor, periodSeed, type PeriodState } from "./per
 import { seeded, type Rng } from "./rng";
 import type { ValueFormat } from "./format";
 import type { Kpi, SectionData } from "./types";
+import { getBrandSummary } from "./holding";
 
 type Ctx = {
   rng: Rng;
@@ -10,6 +11,7 @@ type Ctx = {
   vol: number;
   buckets: string[];
   brand: Brand;
+  period: PeriodState;
 };
 
 function makeCtx(brand: Brand, sectionId: string, period: PeriodState): Ctx {
@@ -18,6 +20,7 @@ function makeCtx(brand: Brand, sectionId: string, period: PeriodState): Ctx {
     vol: brand.scale * periodFactor(period),
     buckets: periodBuckets(period),
     brand,
+    period,
   };
 }
 
@@ -35,7 +38,7 @@ function levelSeries(ctx: Ctx, level: number, trend = 0.08, noise = 0.06): numbe
   return ctx.buckets.map((_, i) => level * (1 + trend * (i / Math.max(1, n - 1) - 0.5)) * ctx.rng.vary(1, noise));
 }
 
-function kpi(ctx: Ctx, label: string, value: number, format: ValueFormat, opts: { invert?: boolean; spark?: number[]; bias?: number } = {}): Kpi {
+function kpi(ctx: Ctx, label: string, value: number, format: ValueFormat, opts: { invert?: boolean | undefined; spark?: number[] | undefined; bias?: number | undefined } = {}): Kpi {
   const bias = opts.bias ?? (ctx.brand.goalBias - 90) / 4;
   const change = ctx.rng.range(-9, 16) + bias * (opts.invert ? -1 : 1);
   return {
@@ -51,7 +54,7 @@ function kpi(ctx: Ctx, label: string, value: number, format: ValueFormat, opts: 
 function zip(ctx: Ctx, series: Record<string, number[]>) {
   return ctx.buckets.map((label, i) => {
     const row: Record<string, number | string> = { label };
-    for (const [k, arr] of Object.entries(series)) row[k] = Math.round(arr[i] * 100) / 100;
+    for (const [k, arr] of Object.entries(series)) row[k] = Math.round((arr[i] ?? 0) * 100) / 100;
     return row;
   });
 }
@@ -63,23 +66,24 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 
 function revops(ctx: Ctx): SectionData {
   const { rng, vol } = ctx;
-  const leads = r0(rng.vary(4200, 0.08) * vol);
-  const mql = r0(leads * rng.range(0.38, 0.46));
+  const summary = getBrandSummary(ctx.brand, ctx.period);
+  const leads = Math.max(summary.leads, 1);
+  const mql = summary.qualifiedLeads;
   const sql = r0(mql * rng.range(0.42, 0.52));
   const prop = r0(sql * rng.range(0.45, 0.55));
-  const won = r0(prop * rng.range(0.3, 0.4) * (ctx.brand.goalBias / 100));
-  const ticket = rng.vary(6800, 0.1);
-  const revenue = won * ticket;
-  const goal = revenue / (ctx.brand.goalBias / 100);
+  const won = Math.max(1, r0(prop * rng.range(0.3, 0.4) * (ctx.brand.goalBias / 100)));
+  const revenue = summary.revenue;
+  const ticket = revenue / won;
+  const goal = revenue / (summary.goalPct / 100);
   const pipeline = prop * ticket * rng.range(1.6, 2.1);
   const conv = (won / leads) * 100;
   const cycle = rng.vary(38, 0.15);
-  const revSeries = trendSeries(ctx, revenue, 0.35);
+  const revSeries = summary.revenueSeries;
   const goalSeries = trendSeries(ctx, goal, 0.1, 0.02);
   const reps = ["Ana Ribeiro", "Bruno Costa", "Carla Mendes", "Diego Alves", "Elisa Prado", "Felipe Nunes"];
   return {
     kpis: [
-      kpi(ctx, "Receita Nova", revenue, "currency", { spark: revSeries }),
+      { ...kpi(ctx, "Receita Nova", revenue, "currency", { spark: summary.revenueSeries }), change: summary.change.revenue },
       kpi(ctx, "Pipeline Ativo", pipeline, "currency"),
       kpi(ctx, "Taxa de Conversão Geral", conv, "percent"),
       kpi(ctx, "Ticket Médio", ticket, "currency"),
@@ -147,7 +151,7 @@ function siteSeo(ctx: Ctx): SectionData {
   const keywords = ["comprar online", "melhor preço", "frete grátis", "loja oficial", "avaliações", "promoção", "lançamento 2026", "atendimento", "como funciona", "planos e preços"];
   return {
     kpis: [
-      kpi(ctx, "Sessões", sessions, "number", { spark: channel.organico }),
+      kpi(ctx, "Sessões", sessions, "number", { spark: channel["organico"] ?? [] }),
       kpi(ctx, "Usuários Únicos", users, "number"),
       kpi(ctx, "Taxa de Conversão do Site", conv, "percent"),
       kpi(ctx, "Cliques Orgânicos", organic, "number", { spark: clicks }),
@@ -241,7 +245,7 @@ function metaAds(ctx: Ctx): SectionData {
         title: "Investimento por Objetivo",
         subtitle: "Distribuição da verba de mídia",
         format: "currency",
-        data: objectives.map((name, i) => ({ name, value: spend * weights[i] * rng.vary(1, 0.1) })),
+        data: objectives.map((name, i) => ({ name, value: spend * (weights[i] ?? 0) })),
       },
     ],
     table: {
@@ -301,7 +305,7 @@ function instagram(ctx: Ctx): SectionData {
         subtitle: "Taxa média de engajamento por tipo de conteúdo",
         format: "percent",
         valueLabel: "Engajamento",
-        data: formats.map((name, i) => ({ name, value: r1(eng * [1.45, 1.2, 0.7, 0.55][i] * rng.vary(1, 0.1)) })),
+        data: formats.map((name, i) => ({ name, value: r1(eng * ([1.45, 1.2, 0.7, 0.55][i] ?? 1) * rng.vary(1, 0.1)) })),
       },
     ],
     table: {
@@ -363,7 +367,7 @@ function facebook(ctx: Ctx): SectionData {
         subtitle: "Distribuição dos seguidores da página",
         format: "percent",
         valueLabel: "Participação",
-        data: ages.map((name, i) => ({ name, value: r1([14, 31, 24, 16, 9, 6][i] * rng.vary(1, 0.1)) })),
+        data: ages.map((name, i) => ({ name, value: r1(([14, 31, 24, 16, 9, 6][i] ?? 1) * rng.vary(1, 0.1)) })),
       },
     ],
     table: {
@@ -394,7 +398,7 @@ function eventos(ctx: Ctx): SectionData {
     const insc = r0(rng.range(120, 900) * ctx.brand.scale + 40);
     const pres = r0(insc * rng.range(0.45, 0.78));
     const leads = r0(pres * rng.range(0.18, 0.4));
-    return { evento: name, data: `${String(2 + i * 3).padStart(2, "0")}/11`, tipo: types[i % types.length], inscritos: insc, presentes: pres, leads, pipeline: leads * rng.range(2200, 5200) };
+    return { evento: name, data: `${String(2 + i * 3).padStart(2, "0")}/11`, tipo: types[i % types.length] ?? "Webinar", inscritos: insc, presentes: pres, leads, pipeline: leads * rng.range(2200, 5200) };
   });
   const participants = list.reduce((a, e) => a + e.presentes, 0);
   const inscritos = list.reduce((a, e) => a + e.inscritos, 0);
@@ -416,7 +420,7 @@ function eventos(ctx: Ctx): SectionData {
         format: "number",
         valueLabel: "Inscritos",
         secondaryLabel: "Presentes",
-        data: list.map((e) => ({ name: e.evento.split(" ")[0], value: e.inscritos, secondary: e.presentes })),
+        data: list.map((e) => ({ name: e.evento.split(" ")[0] ?? e.evento, value: e.inscritos, secondary: e.presentes })),
       },
       {
         kind: "donut",
@@ -612,7 +616,7 @@ function parcerias(ctx: Ctx): SectionData {
         kind: "donut",
         title: "Leads por Tipo de Parceiro",
         format: "number",
-        data: types.map((name, i) => ({ name, value: r0(leads * [0.36, 0.28, 0.2, 0.16][i] * rng.vary(1, 0.1)) })),
+        data: types.map((name, i) => ({ name, value: r0(leads * ([0.36, 0.28, 0.2, 0.16][i] ?? 0) * rng.vary(1, 0.1)) })),
       },
     ],
     table: {

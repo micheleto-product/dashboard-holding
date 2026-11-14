@@ -40,7 +40,7 @@ export function DataTable({ spec }: { spec: TableSpec }) {
                     col.align === "right" && ci > 0 && "text-foreground/90",
                   )}
                 >
-                  <Cell col={col} value={row[col.key]} />
+                  <Cell col={col} value={row[col.key] ?? ""} />
                 </td>
               ))}
             </tr>

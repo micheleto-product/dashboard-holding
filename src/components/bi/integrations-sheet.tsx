@@ -40,7 +40,7 @@ const STATUS_OPTIONS: Status[] = [
 function initialStatus(brandId: string, integrationId: string): Status {
   const r = seeded(`int:${brandId}:${integrationId}`).next();
   const idx = r < 0.55 ? Math.floor(r * 5.4) % 3 : r < 0.7 ? 3 : r < 0.82 ? 4 : 5;
-  return STATUS_OPTIONS[idx];
+  return STATUS_OPTIONS[idx]!;
 }
 
 function SecretInput({ id, placeholder, value, onChange }: { id: string; placeholder: string; value: string; onChange: (v: string) => void }) {
@@ -100,7 +100,7 @@ function IntegrationRow({ brandId, def, status, onStatus }: { brandId: string; d
                 size="sm"
                 className="text-destructive hover:text-destructive"
                 onClick={() => {
-                  onStatus(STATUS_OPTIONS[5]);
+                  onStatus(STATUS_OPTIONS[5]!);
                   toast(`${def.name} desconectado`);
                 }}
               >

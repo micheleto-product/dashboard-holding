@@ -2,7 +2,7 @@ import { getHoldingSummary } from "./holding";
 import { formatValue, formatDelta } from "./format";
 import { periodLabel, type PeriodState } from "./period";
 
-export type AssistantReply = { text: string; bullets?: string[]; recommendation?: string };
+export type AssistantReply = { text: string; bullets?: string[] | undefined; recommendation?: string | undefined };
 
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -19,7 +19,7 @@ export function answer(question: string, period: PeriodState): AssistantReply {
     return {
       text: `No período (${p}), o ROAS global da holding é ${formatValue(totals.roas, "multiplier")} (${formatDelta(change.roas)} vs. período anterior).`,
       bullets: r.map((s, i) => `${i + 1}º ${s.brand.name}: ${formatValue(s.roas, "multiplier")} — investimento de ${formatValue(s.investment, "currency")}`),
-      recommendation: `Avaliar realocar verba incremental para ${r[0].brand.name}, que tem o melhor retorno, e revisar a eficiência de mídia de ${r[r.length - 1].brand.name}.`,
+      recommendation: `Avaliar realocar verba incremental para ${r[0]!.brand.name}, que tem o melhor retorno, e revisar a eficiência de mídia de ${r[r.length - 1]!.brand.name}.`,
     };
   }
   if (q.includes("cac") || q.includes("custo de aquisicao")) {
@@ -27,7 +27,7 @@ export function answer(question: string, period: PeriodState): AssistantReply {
     return {
       text: `O CAC médio ponderado do grupo está em ${formatValue(totals.cac, "currency")} (${formatDelta(change.cac)}).`,
       bullets: r.map((s) => `${s.brand.name}: ${formatValue(s.cac, "currency")} (${formatDelta(s.change.cac)})`),
-      recommendation: `${r[r.length - 1].brand.name} tem o CAC mais alto — vale investigar taxa de conversão do funil e qualidade dos leads.`,
+      recommendation: `${r[r.length - 1]!.brand.name} tem o CAC mais alto — vale investigar taxa de conversão do funil e qualidade dos leads.`,
     };
   }
   if (q.includes("meta") || q.includes("saude") || q.includes("risco") || q.includes("critic") || q.includes("atencao")) {
@@ -38,7 +38,7 @@ export function answer(question: string, period: PeriodState): AssistantReply {
         ? `${risk.length} de ${items.length} empresas estão abaixo da meta no período (${p}).`
         : `Todas as empresas estão dentro da meta no período (${p}).`,
       bullets: r.map((s) => `${s.brand.name}: ${formatValue(s.goalPct, "percent")} da meta — ${s.health.label}`),
-      recommendation: risk.length ? `Priorizar um plano de recuperação para ${risk[0].brand.name}, começando pela página RevOps & Comercial.` : undefined,
+      recommendation: risk.length ? `Priorizar um plano de recuperação para ${risk[0]!.brand.name}, começando pela página RevOps & Comercial.` : undefined,
     };
   }
   if (q.includes("lead")) {

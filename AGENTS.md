@@ -28,3 +28,10 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+
+- Brands live in `src/lib/bi/brands.ts` and the 9 brand pages in `src/lib/bi/sections.meta.ts`; everything else (sidebar, summary, integrations, routes) derives from them, so adding a company is a config change only.
+- All brand pages render through one dynamic route `/marca/$brandId/$section` driven by `SectionData` specs (`src/lib/bi/types.ts`) — keeps the 4–5 KPI / 2 chart / 1 table layout consistent.
+- Dashboard numbers are deterministic sample data from `src/lib/bi/*.data.ts`/`holding.ts` (seeded RNG); RevOps revenue reuses the holding summary so totals agree across pages. Replace these builders when real integrations are connected.
+- Global period, selected brand and theme live in `AppStateProvider` (React context in `__root`), not search params; theme defaults to dark via an inline head script.

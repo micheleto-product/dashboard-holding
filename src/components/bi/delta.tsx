@@ -3,7 +3,7 @@ import { formatDelta } from "@/lib/bi/format";
 import { cn } from "@/lib/utils";
 
 /** Change vs. previous period; green when the movement is good for the business. */
-export function Delta({ change, invert, className }: { change: number; invert?: boolean; className?: string }) {
+export function Delta({ change, invert, className }: { change: number; invert?: boolean | undefined; className?: string | undefined }) {
   const good = invert ? change <= 0 : change >= 0;
   const Icon = change >= 0 ? ArrowUpRight : ArrowDownRight;
   return (

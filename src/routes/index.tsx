@@ -47,12 +47,12 @@ function HoldingSummary() {
 
   const evolution = buckets.map((label, idx) => {
     const row: Record<string, string | number> = { label };
-    for (const it of data.items) row[it.brand.id] = Math.round((metric === "revenue" ? it.revenueSeries : it.investmentSeries)[idx]);
+    for (const it of data.items) row[it.brand.id] = Math.round((metric === "revenue" ? it.revenueSeries : it.investmentSeries)[idx] ?? 0);
     return row;
   });
   const roasTrend = buckets.map((label, idx) => {
     const row: Record<string, string | number> = { label };
-    for (const it of data.items) row[it.brand.id] = Math.round((it.revenueSeries[idx] / it.investmentSeries[idx]) * 100) / 100;
+    for (const it of data.items) row[it.brand.id] = Math.round(((it.revenueSeries[idx] ?? 0) / (it.investmentSeries[idx] || 1)) * 100) / 100;
     return row;
   });
 
@@ -139,10 +139,10 @@ function HoldingSummary() {
           <Legend items={data.items.map((it, i) => ({ label: it.brand.name, color: `var(--chart-${(i % 5) + 1})` }))} />
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={evolution} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+              <BarChart data={evolution} margin={{ top: 14, right: 4, bottom: 0, left: 0 }}>
                 <CartesianGrid vertical={false} stroke="var(--border)" />
                 <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} minTickGap={12} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} width={64} tickFormatter={(v) => formatValue(v, "currency")} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} width={80} tickFormatter={(v) => formatValue(v, "currency")} />
                 <Tooltip cursor={{ fill: "var(--muted)", opacity: 0.5 }} content={<SimpleTooltip names={Object.fromEntries(data.items.map((i) => [i.brand.id, i.brand.name]))} format="currency" />} />
                 {data.items.map((it, i) => (
                   <Bar key={it.brand.id} dataKey={it.brand.id} name={it.brand.name} stackId="s" fill={`var(--chart-${(i % 5) + 1})`} radius={i === data.items.length - 1 ? [3, 3, 0, 0] : 0} maxBarSize={32} />
@@ -161,7 +161,7 @@ function HoldingSummary() {
         <Legend items={data.items.map((it, i) => ({ label: it.brand.name, color: `var(--chart-${(i % 5) + 1})` }))} />
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={roasTrend} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+            <LineChart data={roasTrend} margin={{ top: 14, right: 4, bottom: 0, left: 0 }}>
               <CartesianGrid vertical={false} stroke="var(--border)" />
               <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} minTickGap={12} />
               <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} width={48} tickFormatter={(v) => `${v}x`} />
@@ -178,7 +178,7 @@ function HoldingSummary() {
 }
 
 function sumSeries(list: number[][]) {
-  return list[0].map((_, i) => list.reduce((a, s) => a + s[i], 0));
+  return (list[0] ?? []).map((_, i) => list.reduce((a, s) => a + (s[i] ?? 0), 0));
 }
 
 function SimpleTooltip({ active, payload, label, names, format }: { active?: boolean; payload?: { dataKey?: string | number; value?: number; color?: string }[]; label?: string; names: Record<string, string>; format: "currency" | "multiplier" }) {

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function Panel({ title, subtitle, actions, children, className }: { title: string; subtitle?: string; actions?: ReactNode; children: ReactNode; className?: string }) {
+export function Panel({ title, subtitle, actions, children, className }: { title: string; subtitle?: string | undefined; actions?: ReactNode; children: ReactNode; className?: string | undefined }) {
   return (
     <section className={cn("surface animate-fade-up flex flex-col", className)}>
       <header className="flex items-start justify-between gap-3 px-5 pt-4 pb-3">
@@ -16,7 +16,7 @@ export function Panel({ title, subtitle, actions, children, className }: { title
   );
 }
 
-export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
+export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string | undefined; title: string; description?: string | undefined; actions?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>

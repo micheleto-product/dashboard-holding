@@ -46,7 +46,7 @@ function BrandSwitcher() {
   const { sectionId } = useCurrentBrandSection();
   const navigate = useNavigate();
   const { state } = useSidebar();
-  const brand = getBrand(brandId) ?? BRANDS[0];
+  const brand = getBrand(brandId) ?? BRANDS[0]!;
 
   const select = (id: string) => {
     setBrandId(id);
@@ -90,7 +90,7 @@ function BrandSwitcher() {
 export function AppSidebar() {
   const { brandId } = useAppState();
   const { pathname, brandId: routeBrand, sectionId } = useCurrentBrandSection();
-  const brand = getBrand(routeBrand ?? brandId) ?? BRANDS[0];
+  const brand = getBrand(routeBrand ?? brandId) ?? BRANDS[0]!;
 
   return (
     <Sidebar collapsible="icon">

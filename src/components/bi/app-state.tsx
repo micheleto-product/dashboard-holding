@@ -17,7 +17,7 @@ const Ctx = createContext<AppState | null>(null);
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [period, setPeriod] = useState<PeriodState>({ key: "30d" });
-  const [brandId, setBrandId] = useState(BRANDS[0].id);
+  const [brandId, setBrandId] = useState(BRANDS[0]!.id);
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
